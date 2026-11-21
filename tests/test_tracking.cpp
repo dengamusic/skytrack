@@ -514,10 +514,24 @@ double mean_error_between(const Outcome& o, int target_id, double t0, double t1)
   return n > 0 ? sum / n : std::numeric_limits<double>::infinity();
 }
 
+/// Largest horizontal error of the tracks on one target within [t0, t1].
+double peak_error_between(const Outcome& o, int target_id, double t0, double t1) {
+  double peak = 0.0;
+  for (const eval::Match& m : o.evaluation.matches) {
+    if (m.target_id == target_id && m.t_s >= t0 && m.t_s <= t1) peak = std::max(peak, m.error_horizontal_m);
+  }
+  return peak;
+}
+
 /// The intruder hovers from 95 s to 125 s, inside the radar's Doppler notch.
 /// The cameras and the RF direction finder still see it, but only in angle.
 /// Inferring "range rate ~ 0" from the radar's silence pins the track's
 /// velocity, so it stays on the drone instead of drifting along the bearings.
+/// Without it the track flies off at the old speed until the cameras pull it
+/// back or it is dropped. That shows in the peak error during the hover
+/// (seeds 1-8 and 42: under 25 m with the inference, over 60 m without).
+/// The mean error dilutes the drift with the time around it: on seed 42 the
+/// ratio of means is 0.36 on ARM and 0.52 on x86-64, too close to test.
 TEST(Tracker, NotchInferenceHoldsAHoveringDroneInPlace) {
   const eval::TargetScore& with = score(baseline_outcome(), "intruder");
   EXPECT_EQ(with.track_ids.size(), 1u);
@@ -531,10 +545,11 @@ TEST(Tracker, NotchInferenceHoldsAHoveringDroneInPlace) {
   // Other sensors still see it, so the radar's silence must not delete it.
   EXPECT_GT(score(without, "intruder").tracked_fraction, 0.9);
 
-  const double hover_with = mean_error_between(baseline_outcome(), with.id, 95.0, 125.0);
-  const double hover_without = mean_error_between(without, with.id, 95.0, 125.0);
-  EXPECT_LT(hover_with, 15.0);
-  EXPECT_LT(hover_with, 0.5 * hover_without);
+  EXPECT_LT(mean_error_between(baseline_outcome(), with.id, 95.0, 125.0), 15.0);
+  const double peak_with = peak_error_between(baseline_outcome(), with.id, 95.0, 125.0);
+  const double peak_without = peak_error_between(without, with.id, 95.0, 125.0);
+  EXPECT_LT(peak_with, 30.0);
+  EXPECT_GT(peak_without, 2.0 * peak_with);
 }
 
 /// Without registration the radar's 1 degree heading error puts targets
