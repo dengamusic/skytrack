@@ -1,0 +1,192 @@
+{
+  "name": "cuas_baseline",
+  "description": "A ground site watched by a rotating radar, a wide camera, a zoom camera on a pan-tilt, an RF direction finder, ADS-B and Remote ID receivers, and a delayed online flight feed. One unregistered drone approaches, hovers (invisible to the radar's Doppler filter) and leaves; one registered drone mows a field; an airliner passes; two birds wander. Every sensor has realistic errors.",
+  "seed": 42,
+  "duration_s": 180,
+  "truth_rate_hz": 10,
+  "origin": {"lat_deg": 48.25, "lon_deg": 11.65, "alt_m": 480},
+  "targets": [
+    {
+      "id": 1,
+      "name": "intruder",
+      "class": "drone",
+      "position_enu_m": [2600, 2200, 120],
+      "velocity_enu_mps": [-11, -9, 0],
+      "segments": [
+        {"model": "cv", "duration_s": 90},
+        {"model": "ca", "duration_s": 5, "accel_enu_mps2": [2.2, 1.8, 0]},
+        {"model": "cv", "duration_s": 30},
+        {"model": "ca", "duration_s": 4, "accel_enu_mps2": [0, -3, 0.25]},
+        {"model": "ct", "duration_s": 20, "turn_rate_deg_s": 9}
+      ],
+      "rcs_dbsm": -20,
+      "size_m": 0.35,
+      "rf_signature": "ocusync"
+    },
+    {
+      "id": 2,
+      "name": "registered",
+      "class": "drone",
+      "t_start_s": 10,
+      "t_end_s": 170,
+      "position_enu_m": [-1500, 300, 80],
+      "velocity_enu_mps": [8, 0, 0],
+      "segments": [
+        {"model": "cv", "duration_s": 30},
+        {"model": "ct", "duration_s": 10, "turn_rate_deg_s": -18},
+        {"model": "cv", "duration_s": 30},
+        {"model": "ct", "duration_s": 10, "turn_rate_deg_s": 18},
+        {"model": "cv", "duration_s": 30},
+        {"model": "ct", "duration_s": 10, "turn_rate_deg_s": -18}
+      ],
+      "rcs_dbsm": -22,
+      "size_m": 0.5,
+      "rf_signature": "wifi",
+      "cooperative": {"protocol": "remote_id", "id": "1596F35045710000001", "horizontal_std_m": 3, "vertical_std_m": 5}
+    },
+    {
+      "id": 3,
+      "name": "airliner",
+      "class": "aircraft",
+      "position_enu_m": [4000, -6000, 1500],
+      "velocity_enu_mps": [0, 70, 0],
+      "rcs_dbsm": 15,
+      "size_m": 35,
+      "cooperative": {"protocol": "adsb", "id": "3c6589", "horizontal_std_m": 10, "vertical_std_m": 15}
+    },
+    {
+      "id": 4,
+      "name": "gull",
+      "class": "bird",
+      "position_enu_m": [900, -500, 40],
+      "velocity_enu_mps": [6, 2, 0],
+      "segments": [
+        {"model": "ct", "duration_s": 15, "turn_rate_deg_s": 20},
+        {"model": "cv", "duration_s": 10},
+        {"model": "ct", "duration_s": 12, "turn_rate_deg_s": -25},
+        {"model": "cv", "duration_s": 10},
+        {"model": "ct", "duration_s": 20, "turn_rate_deg_s": 15}
+      ],
+      "rcs_dbsm": -30,
+      "size_m": 0.6
+    },
+    {
+      "id": 5,
+      "name": "crow",
+      "class": "bird",
+      "t_start_s": 60,
+      "t_end_s": 150,
+      "position_enu_m": [-700, 1100, 30],
+      "velocity_enu_mps": [-4, 5, 0.5],
+      "segments": [
+        {"model": "ct", "duration_s": 10, "turn_rate_deg_s": 30},
+        {"model": "cv", "duration_s": 15},
+        {"model": "ct", "duration_s": 10, "turn_rate_deg_s": -30}
+      ],
+      "rcs_dbsm": -32,
+      "size_m": 0.4
+    }
+  ],
+  "sensors": [
+    {
+      "id": "radar-1",
+      "type": "radar",
+      "rate_hz": 1,
+      "mount": {"position_enu_m": [0, 0, 6], "heading_deg": 0},
+      "errors": {"heading_bias_deg": 1.0, "latency_mean_s": 0.15, "latency_jitter_s": 0.03, "noise_scale": 1.1},
+      "radar": {
+        "mode": "rotating",
+        "min_range_m": 100,
+        "max_range_m": 6000,
+        "min_el_deg": -2,
+        "max_el_deg": 30,
+        "sigma_range_m": 4,
+        "sigma_az_deg": 0.6,
+        "sigma_el_deg": 1.2,
+        "sigma_range_rate_mps": 0.25,
+        "snr_ref_db": 53,
+        "pfa": 1e-6,
+        "doppler_notch_mps": 1.0,
+        "false_alarms_per_scan": 3
+      }
+    },
+    {
+      "id": "cam-wide",
+      "type": "camera",
+      "rate_hz": 10,
+      "mount": {"position_enu_m": [2, 0, 5], "heading_deg": 45, "pitch_deg": 8},
+      "errors": {"heading_bias_deg": 0.3, "clock_offset_s": 0.08, "latency_mean_s": 0.12, "latency_jitter_s": 0.02},
+      "camera": {
+        "fx_px": 1000,
+        "sigma_px": 1.5,
+        "size_at_half_pd_px": 4,
+        "size_pd_slope_px": 1.2,
+        "max_range_m": 6000,
+        "false_alarms_per_frame": 0.3,
+        "class_accuracy": 0.8
+      }
+    },
+    {
+      "id": "cam-ptz",
+      "type": "camera",
+      "rate_hz": 15,
+      "mount": {"position_enu_m": [2, 1, 5], "heading_deg": 0},
+      "errors": {"pitch_bias_deg": 0.2, "clock_offset_s": -0.03, "latency_mean_s": 0.2, "latency_jitter_s": 0.05},
+      "camera": {
+        "fx_px": 20000,
+        "sigma_px": 1.0,
+        "size_at_half_pd_px": 3,
+        "size_pd_slope_px": 0.8,
+        "max_range_m": 6000,
+        "false_alarms_per_frame": 0.05,
+        "class_accuracy": 0.9,
+        "gimbal": [
+          {"t_s": 0, "pan_deg": 49.6, "tilt_deg": 2.0},
+          {"t_s": 40, "pan_deg": 49.6, "tilt_deg": 2.0},
+          {"t_s": 44, "pan_deg": -79, "tilt_deg": 2.8},
+          {"t_s": 60, "pan_deg": -79, "tilt_deg": 2.8},
+          {"t_s": 64, "pan_deg": 49.6, "tilt_deg": 2.6}
+        ]
+      }
+    },
+    {
+      "id": "rf-df-1",
+      "type": "rf_bearing",
+      "rate_hz": 2,
+      "timestamps": "arrival",
+      "mount": {"position_enu_m": [0, 0, 8], "heading_deg": 0},
+      "errors": {"heading_bias_deg": -2.0, "latency_mean_s": 0.3, "latency_jitter_s": 0.1, "dropout_prob": 0.02},
+      "rf_bearing": {
+        "max_range_m": 5000,
+        "sigma_az_deg": 3,
+        "pd": 0.85,
+        "false_alarms_per_report": 0.1,
+        "signature_id_prob": 0.7
+      }
+    },
+    {
+      "id": "adsb-rx",
+      "type": "cooperative",
+      "rate_hz": 2,
+      "mount": {"position_enu_m": [0, 0, 10]},
+      "errors": {"latency_mean_s": 0.05, "latency_jitter_s": 0.01},
+      "cooperative": {"protocol": "adsb", "max_range_m": 250000, "reception_prob": 0.9}
+    },
+    {
+      "id": "remoteid-rx",
+      "type": "cooperative",
+      "rate_hz": 1,
+      "mount": {"position_enu_m": [0, 0, 10]},
+      "errors": {"latency_mean_s": 0.1, "latency_jitter_s": 0.02, "dropout_prob": 0.05},
+      "cooperative": {"protocol": "remote_id", "max_range_m": 2000, "reception_prob": 0.8}
+    },
+    {
+      "id": "osint-feed",
+      "type": "cooperative",
+      "rate_hz": 0.2,
+      "phase_s": 1.3,
+      "errors": {"latency_mean_s": 6.0, "latency_jitter_s": 2.0},
+      "cooperative": {"protocol": "adsb", "max_range_m": 10000000, "reception_prob": 0.95}
+    }
+  ]
+}

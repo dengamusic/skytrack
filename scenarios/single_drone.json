@@ -1,0 +1,46 @@
+{
+  "name": "single_drone",
+  "description": "One drone flies past one staring radar and one camera. No injected errors: use it to check the pipeline end to end.",
+  "seed": 1,
+  "duration_s": 60,
+  "truth_rate_hz": 10,
+  "origin": {"lat_deg": 48.25, "lon_deg": 11.65, "alt_m": 480},
+  "targets": [
+    {
+      "id": 1,
+      "name": "drone",
+      "class": "drone",
+      "position_enu_m": [-450, 650, 50],
+      "velocity_enu_mps": [10, -2.5, 0],
+      "segments": [
+        {"model": "cv", "duration_s": 25},
+        {"model": "ct", "duration_s": 10, "turn_rate_deg_s": -9},
+        {"model": "cv", "duration_s": 25}
+      ],
+      "rcs_dbsm": -20,
+      "size_m": 0.6
+    }
+  ],
+  "sensors": [
+    {
+      "id": "radar-1",
+      "type": "radar",
+      "rate_hz": 2,
+      "mount": {"position_enu_m": [0, 0, 5], "heading_deg": 0},
+      "radar": {
+        "mode": "staring",
+        "fov_az_deg": 120,
+        "max_range_m": 3000,
+        "snr_ref_db": 53,
+        "false_alarms_per_scan": 1
+      }
+    },
+    {
+      "id": "cam-1",
+      "type": "camera",
+      "rate_hz": 10,
+      "mount": {"position_enu_m": [1, 0, 4], "heading_deg": 332, "pitch_deg": 4},
+      "camera": {"fx_px": 4000, "size_at_half_pd_px": 3, "max_range_m": 2000}
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: tests (Debug, -Werror, ASan + UBSan)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev nlohmann-json3-dev ninja-build
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSKYTRACK_WERROR=ON -DSKYTRACK_SANITIZE=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Simulate, track and score every scenario
+        run: |
+          for scenario in scenarios/*.json; do
+            run="runs/$(basename "$scenario" .json)"
+            ./build/skytrack_sim "$scenario" "$run"
+            ./build/skytrack_track "$run"
+            ./build/skytrack_eval "$run"
+          done
+
+      - name: Two nodes and a fusion centre
+        run: |
+          run=runs/two_sites
+          ./build/skytrack_track "$run" --out "$run/site-a" \
+            --sensors "$(jq -r '.nodes["site-a"] | join(",")' configs/nodes/two_sites.json)"
+          ./build/skytrack_track "$run" --out "$run/site-b" \
+            --sensors "$(jq -r '.nodes["site-b"] | join(",")' configs/nodes/two_sites.json)"
+          ./build/skytrack_fuse "$run/site-a" "$run/site-b" --out "$run/fused"
+          ./build/skytrack_eval "$run" --tracks "$run/fused"
+
+      - name: Camera cued in closed loop
+        run: |
+          ./build/skytrack_cue scenarios/cuas_baseline.json runs/cued
+          ./build/skytrack_eval runs/cued
+
+  benchmark:
+    name: benchmark (Release)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev nlohmann-json3-dev ninja-build
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Build
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSKYTRACK_BUILD_TESTS=OFF
+          cmake --build build
+
+      # Each script fails the job if a result gets worse than tools/thresholds.json allows.
+      - name: Benchmark over seeds and configurations
+        run: |
+          python3 tools/benchmark.py --check
+          cat runs/benchmark/results.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Distributed tracking benchmark
+        run: |
+          python3 tools/two_sites.py --check
+          cat runs/two_sites_benchmark/results.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Camera cueing benchmark
+        run: |
+          python3 tools/cueing.py --check
+          cat runs/cueing_benchmark/results.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Plot the baseline run
+        run: |
+          ./build/skytrack_sim scenarios/cuas_baseline.json runs/cuas_baseline
+          ./build/skytrack_track runs/cuas_baseline
+          ./build/skytrack_eval runs/cuas_baseline
+          uv run tools/plot_run.py runs/cuas_baseline
+          uv run tools/plot_tracks.py runs/cuas_baseline
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results
+          path: |
+            runs/benchmark/results.md
+            runs/two_sites_benchmark/results.md
+            runs/cueing_benchmark/results.md
+            runs/cuas_baseline/plots/
+            runs/cuas_baseline/tracker/plots/
+            runs/cuas_baseline/tracker/eval/metrics.json
+
+  docker:
+    name: docker image (builds and tests inside)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker build -t skytrack .
+      - name: Run the demo
+        run: docker run --rm skytrack

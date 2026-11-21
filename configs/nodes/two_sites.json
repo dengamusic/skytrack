@@ -1,0 +1,7 @@
+{
+  "description": "Which sensors each node of scenarios/two_sites.json owns. Both nodes also take the same online flight feed, so their tracks share that data.",
+  "nodes": {
+    "site-a": ["radar-1", "cam-wide", "cam-ptz", "rf-df-1", "adsb-rx", "remoteid-rx", "osint-feed"],
+    "site-b": ["radar-2", "cam-b", "rf-df-2", "adsb-rx-2", "osint-feed"]
+  }
+}

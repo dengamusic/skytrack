@@ -1,0 +1,7 @@
+build/
+runs/
+docs/
+.cache/
+.github/
+**/__pycache__/
+compile_commands.json
