@@ -24,7 +24,12 @@ The tracker fuses all of it into one track per target:
 Everything is scored against the simulator's ground truth with GOSPA, track
 continuity, covariance consistency (NEES) and time to classify.
 
-![confirmed tracks over the true paths](docs/tracks.png)
+![replay of the cued-camera scene: tracks, radar plots, camera and RF bearings](docs/replay.gif)
+
+**[Open the interactive replay](https://dengamusic.github.io/skytrack/)**: the
+three scenes below in the browser, with every detection, track and
+uncertainty ellipse; hover a track for its details. See
+[Replay viewer](#replay-viewer).
 
 **Baseline scene** (5 targets, 180 s, 8 random seeds):
 
@@ -96,6 +101,37 @@ detections used: 99.2% of target detections, 2.19% of false alarms; 0 went to th
 The birds are classed `unknown` here because the scripted pan-tilt camera
 never looks at them. Pointed by the tracker, it classifies both
 ([Camera cueing](#camera-cueing)).
+
+## Replay viewer
+
+[`viewer/`](viewer) is one web page (plain HTML, CSS and JavaScript, no
+libraries) that replays a run on a map:
+
+- the true paths, and every detection where the tracker would place it: radar
+  plots and broadcast positions as points, camera and RF detections as
+  bearing lines from their surveyed mounts
+- the tracks with their trails and 95% position ellipses, and where the zoom
+  camera is looking
+- GOSPA over time, the tracks alive at each moment and the run's scores;
+  hovering a track shows its sensors, uncertainty and error against the truth
+
+It has three scenes, all seed 42: one site; two sites and their fusion centre
+(switch between the fused picture and each node's own); and the camera
+pointed by the tracker. Colours come from scoring against the simulator's
+truth (detections by the target they came from, grey for false alarms;
+tracks by the target they followed), which the tracker never sees.
+
+CI rebuilds it on every push to `main` and publishes it to GitHub Pages
+([`.github/workflows/pages.yml`](.github/workflows/pages.yml)). To run it
+locally:
+
+```bash
+python3 tools/viewer_data.py                      # runs the scenes into runs/viewer/
+python3 -m http.server -d runs/viewer/site 8000   # then open http://localhost:8000
+```
+
+The animation at the top is the viewer's capture mode
+(`?capture=1&scene=cued`), 80 s to 140 s of the cued scene.
 
 ## Results
 
@@ -740,7 +776,9 @@ src/, apps/                  implementation and the five command-line tools
 tests/                       GoogleTest suite
 scenarios/                   cuas_baseline.json, two_sites.json, single_drone.json
 configs/                     tracker configurations, ablations, node assignments
-tools/                       benchmark.py, two_sites.py, cueing.py, thresholds.json, plot scripts
+tools/                       benchmark.py, two_sites.py, cueing.py, thresholds.json, plot scripts,
+                             viewer_data.py (runs the replay scenes)
+viewer/                      the replay web page
 ```
 
 ## Roadmap
@@ -755,6 +793,7 @@ tools/                       benchmark.py, two_sites.py, cueing.py, thresholds.j
 - [x] Track-to-track fusion between sensor nodes (covariance intersection)
 - [x] Closed-loop cueing of the pan-tilt camera from the tracker's output
 - [x] Docker image; CI that fails on a benchmark regression
+- [x] Browser replay viewer, published to GitHub Pages
 - [ ] IMM (constant velocity + coordinated turn), then JPDA
 - [ ] Coverage-aware existence at the fusion centre (negative information across nodes)
 - [ ] Real data: replay of recorded ADS-B (OpenSky), MMAUD

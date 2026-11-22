@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>skytrack replay</title>
+  <meta name="description" content="Replay of a simulated counter-drone site: radar, cameras, RF direction finding and ADS-B fused into one track picture by skytrack.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <strong>skytrack</strong>
+      <span class="sub">multi-sensor tracking replay</span>
+    </div>
+    <nav class="scenes" id="scenes" aria-label="Scene"></nav>
+    <div class="top-right">
+      <button id="theme" class="icon" title="Light / dark" aria-label="Switch light or dark theme">◐</button>
+      <a class="repo" href="https://github.com/dengamusic/skytrack" target="_blank" rel="noopener">Code on GitHub</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="map-wrap" aria-label="Map">
+      <canvas id="map"></canvas>
+      <div class="map-tools">
+        <button id="fit-site">Site</button>
+        <button id="fit-all">Whole scene</button>
+      </div>
+      <div id="tooltip" class="tooltip" hidden></div>
+      <div id="loading" class="loading">Loading…</div>
+    </section>
+
+    <aside class="panel">
+      <section>
+        <h1 id="scene-title"></h1>
+        <p id="scene-blurb" class="blurb"></p>
+        <div id="set-picker" class="segmented" hidden></div>
+        <p id="note" class="note" hidden></p>
+      </section>
+
+      <section>
+        <h2>Tracks now <span id="track-count" class="count"></span></h2>
+        <table class="tracks">
+          <thead><tr><th>Track</th><th>Class</th><th>Speed</th><th title="Radius of the 95% position ellipse along its long axis">±95%</th><th>Sensors</th></tr></thead>
+          <tbody id="track-rows"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Scores for this run <span class="count">(seed 42, all 180 s)</span></h2>
+        <p class="kpi"><span id="gospa-mean"></span> mean GOSPA <span class="hint">(position error plus a penalty for each missed target or false track; lower is better)</span></p>
+        <table class="scores">
+          <thead><tr><th>Target</th><th title="Share of the time a track was on it">Tracked</th><th title="Horizontal RMS error">Error</th><th title="Track breaks and ID swaps">Breaks</th><th title="Time from first track to the right class">Classified</th></tr></thead>
+          <tbody id="score-rows"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Layers</h2>
+        <div class="layers" id="layers"></div>
+      </section>
+
+      <section class="legend" aria-label="Legend">
+        <h2>Legend</h2>
+        <ul>
+          <li><svg viewBox="0 0 28 12"><line x1="2" y1="6" x2="26" y2="6" class="lg-truth"/></svg>true path (simulator)</li>
+          <li><svg viewBox="0 0 28 12"><line x1="2" y1="6" x2="20" y2="6" class="lg-track"/><circle cx="21" cy="6" r="3.5" class="lg-dot"/></svg>confirmed track and trail</li>
+          <li><svg viewBox="0 0 28 12"><ellipse cx="14" cy="6" rx="11" ry="4.5" class="lg-ellipse"/></svg>95% position uncertainty</li>
+          <li><svg viewBox="0 0 28 12"><circle cx="14" cy="6" r="3" class="lg-tentative"/></svg>tentative track (not yet confirmed)</li>
+          <li><svg viewBox="0 0 28 12"><circle cx="14" cy="6" r="2.2" class="lg-radar"/></svg>radar plot</li>
+          <li><svg viewBox="0 0 28 12"><rect x="11" y="3" width="6" height="6" class="lg-coop"/></svg>ADS-B / Remote ID position</li>
+          <li><svg viewBox="0 0 28 12"><line x1="2" y1="10" x2="26" y2="2" class="lg-cam"/></svg>camera bearing</li>
+          <li><svg viewBox="0 0 28 12"><line x1="2" y1="10" x2="26" y2="2" class="lg-rf"/></svg>RF direction-finder bearing</li>
+        </ul>
+        <p class="hint">Colour is the target a track followed, from scoring against the simulator's truth (grey: a false track). The tracker itself never sees the truth.</p>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="timeline">
+    <button id="play" class="play" aria-label="Play">▶</button>
+    <select id="speed" aria-label="Playback speed"></select>
+    <div class="scrub">
+      <canvas id="spark" aria-label="GOSPA over time; click to jump"></canvas>
+      <input id="time" type="range" min="0" max="180" step="0.1" value="0" aria-label="Time">
+    </div>
+    <span id="clock" class="clock">0.0 s</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
