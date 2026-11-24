@@ -689,7 +689,36 @@ function seek(t) {
   renderPanel();
 }
 
+// ---- "How to read this" guide: opens on the first visit and on demand; the replay waits while it is open.
+
+const GUIDE_SEEN = 'skytrack-guide-seen';
+let resumeAfterGuide = false;
+
+function openGuide() {
+  const guide = $('guide');
+  if (guide.open) return;
+  resumeAfterGuide = state.playing;
+  setPlaying(false);
+  guide.showModal();
+}
+
+function bindGuide() {
+  const guide = $('guide');
+  $('help').addEventListener('click', openGuide);
+  document.addEventListener('click', (ev) => {
+    if (ev.target.closest('[data-open-guide]')) openGuide();
+  });
+  // A click on the dimmed backdrop lands on the dialog element itself.
+  guide.addEventListener('click', (ev) => { if (ev.target === guide) guide.close(); });
+  guide.addEventListener('close', () => {
+    localStorage.setItem(GUIDE_SEEN, '1');
+    if (resumeAfterGuide) setPlaying(true);
+    resumeAfterGuide = false;
+  });
+}
+
 function bindControls() {
+  bindGuide();
   $('scenes').addEventListener('click', (ev) => {
     const b = ev.target.closest('button[data-scene]');
     if (b) showScene(b.dataset.scene, state.setName);
@@ -798,6 +827,11 @@ function bindControls() {
 
   window.addEventListener('keydown', (ev) => {
     if (ev.target.matches('input, select, textarea')) return;
+    if (ev.key === '?') {
+      if ($('guide').open) $('guide').close(); else openGuide();
+      return;
+    }
+    if ($('guide').open) return;
     if (ev.key === ' ') { ev.preventDefault(); $('play').click(); }
     if (ev.key === 'ArrowRight') seek(state.t + (ev.shiftKey ? 10 : 1));
     if (ev.key === 'ArrowLeft') seek(state.t - (ev.shiftKey ? 10 : 1));
@@ -840,6 +874,9 @@ async function main() {
   state.t = Number(params.get('t')) || 0;
   await showScene(params.get('scene') || state.index[0].name, params.get('set'));
   setPlaying(state.playing);
+  // ?guide=1 always opens the guide, ?guide=0 never does; otherwise only on the first visit.
+  const guideParam = params.get('guide');
+  if (!capture && guideParam !== '0' && (guideParam === '1' || !localStorage.getItem(GUIDE_SEEN))) openGuide();
   if (capture) document.body.dataset.ready = '1';
   requestAnimationFrame(frame);
 }

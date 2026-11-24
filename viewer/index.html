@@ -15,6 +15,7 @@
     </div>
     <nav class="scenes" id="scenes" aria-label="Scene"></nav>
     <div class="top-right">
+      <button id="help" class="help" title="What the map shows (?)" aria-haspopup="dialog">How to read this</button>
       <button id="theme" class="icon" title="Light / dark" aria-label="Switch light or dark theme">◐</button>
       <a class="repo" href="https://github.com/dengamusic/skytrack" target="_blank" rel="noopener">Code on GitHub</a>
     </div>
@@ -64,16 +65,16 @@
       <section class="legend" aria-label="Legend">
         <h2>Legend</h2>
         <ul>
-          <li><svg viewBox="0 0 28 12"><line x1="2" y1="6" x2="26" y2="6" class="lg-truth"/></svg>true path (simulator)</li>
-          <li><svg viewBox="0 0 28 12"><line x1="2" y1="6" x2="20" y2="6" class="lg-track"/><circle cx="21" cy="6" r="3.5" class="lg-dot"/></svg>confirmed track and trail</li>
-          <li><svg viewBox="0 0 28 12"><ellipse cx="14" cy="6" rx="11" ry="4.5" class="lg-ellipse"/></svg>95% position uncertainty</li>
-          <li><svg viewBox="0 0 28 12"><circle cx="14" cy="6" r="3" class="lg-tentative"/></svg>tentative track (not yet confirmed)</li>
-          <li><svg viewBox="0 0 28 12"><circle cx="14" cy="6" r="2.2" class="lg-radar"/></svg>radar plot</li>
-          <li><svg viewBox="0 0 28 12"><rect x="11" y="3" width="6" height="6" class="lg-coop"/></svg>ADS-B / Remote ID position</li>
-          <li><svg viewBox="0 0 28 12"><line x1="2" y1="10" x2="26" y2="2" class="lg-cam"/></svg>camera bearing</li>
-          <li><svg viewBox="0 0 28 12"><line x1="2" y1="10" x2="26" y2="2" class="lg-rf"/></svg>RF direction-finder bearing</li>
+          <li><svg viewBox="0 0 28 12"><line x1="2" y1="6" x2="26" y2="6" class="lg-truth"/></svg>where it really flew (true path)</li>
+          <li><svg viewBox="0 0 28 12"><line x1="2" y1="6" x2="20" y2="6" class="lg-track"/><circle cx="21" cy="6" r="3.5" class="lg-dot"/></svg>the tracker's estimate and its tail</li>
+          <li><svg viewBox="0 0 28 12"><ellipse cx="14" cy="6" rx="11" ry="4.5" class="lg-ellipse"/></svg>95% sure it is in here</li>
+          <li><svg viewBox="0 0 28 12"><circle cx="14" cy="6" r="3" class="lg-tentative"/></svg>possible track, not confirmed yet</li>
+          <li><svg viewBox="0 0 28 12"><circle cx="14" cy="6" r="2.2" class="lg-radar"/></svg>radar hit (a position)</li>
+          <li><svg viewBox="0 0 28 12"><rect x="11" y="3" width="6" height="6" class="lg-coop"/></svg>self-reported position (ADS-B, Remote ID)</li>
+          <li><svg viewBox="0 0 28 12"><line x1="2" y1="10" x2="26" y2="2" class="lg-cam"/></svg>camera hit (a direction only)</li>
+          <li><svg viewBox="0 0 28 12"><line x1="2" y1="10" x2="26" y2="2" class="lg-rf"/></svg>radio direction finder (a direction only)</li>
         </ul>
-        <p class="hint">Colour is the target a track followed, from scoring against the simulator's truth (grey: a false track). The tracker itself never sees the truth.</p>
+        <p class="hint">Colour is the real object something belongs to, from scoring against the truth afterwards (grey: nothing real). The tracker itself never sees the truth. <button class="linklike" data-open-guide>More in the guide</button></p>
       </section>
     </aside>
   </main>
@@ -87,6 +88,79 @@
     </div>
     <span id="clock" class="clock">0.0 s</span>
   </footer>
+
+  <dialog id="guide" class="guide" aria-labelledby="guide-title">
+    <form method="dialog" class="guide-body">
+      <div class="guide-head">
+        <h1 id="guide-title">How to read this</h1>
+        <button class="icon close" aria-label="Close the guide" autofocus>✕</button>
+      </div>
+      <p class="lead">A simulated counter-drone site, replayed. Sensors report what they detect; the tracker turns those
+        reports into <strong>tracks</strong>: where each object is, where it is heading and what it is. The map draws the
+        tracker's picture over the truth, so you can see how close it got.</p>
+
+      <h2>On the map</h2>
+      <ul class="key">
+        <li><svg viewBox="0 0 40 20"><line x1="3" y1="10" x2="37" y2="10" class="lg-truth"/><path d="M21 10h10M26 5v10" class="lg-cross"/></svg>
+          <p><strong>Where it really flew.</strong> The faint line is the true path, the cross is where the object is now.
+            This is the answer sheet: the tracker never sees it.</p></li>
+        <li><svg viewBox="0 0 40 20"><polyline points="2,15 11,13 20,10" class="lg-track"/><line x1="20" y1="10" x2="34" y2="5" class="lg-track"/><circle cx="20" cy="10" r="3.5" class="lg-dot"/></svg>
+          <p><strong>The tracker's estimate.</strong> Dot: where it thinks the object is. Short line: where it is heading.
+            Tail: its last 30 s. Label: track number and what it thinks the object is.</p></li>
+        <li><svg viewBox="0 0 40 20"><ellipse cx="20" cy="10" rx="15" ry="6" class="lg-ellipse"/></svg>
+          <p><strong>How sure it is.</strong> 95% likely to be inside the shaded area. Dashed when no sensor has updated
+            the track for 2 s.</p></li>
+        <li><svg viewBox="0 0 40 20"><circle cx="20" cy="10" r="4" class="lg-tentative"/></svg>
+          <p><strong>Not confirmed yet.</strong> A possible object still being checked. Most are radar clutter and vanish
+            within seconds.</p></li>
+        <li><svg viewBox="0 0 40 20"><circle cx="20" cy="10" r="3" class="lg-radar"/></svg>
+          <p><strong>Radar hit.</strong> A full position: direction and distance.</p></li>
+        <li><svg viewBox="0 0 40 20"><rect x="16" y="6" width="8" height="8" class="lg-coop"/></svg>
+          <p><strong>Self-reported position.</strong> Airliners (ADS-B) and registered drones (Remote ID) broadcast where
+            they are.</p></li>
+        <li><svg viewBox="0 0 40 20"><line x1="4" y1="16" x2="36" y2="4" class="lg-cam"/></svg>
+          <p><strong>Camera hit.</strong> A direction only: a camera cannot tell how far away something is.</p></li>
+        <li><svg viewBox="0 0 40 20"><line x1="4" y1="16" x2="36" y2="4" class="lg-rf"/></svg>
+          <p><strong>Radio direction finder.</strong> Hears a drone's control radio. Also a direction only.</p></li>
+        <li><svg viewBox="0 0 40 20"><circle cx="20" cy="11" r="8" class="lg-ring"/><path d="M20 7 L16.5 14 L23.5 14 Z" class="lg-site"/></svg>
+          <p><strong>Sensor site and radar reach.</strong> The triangle is the site, the big dashed circle how far its
+            radar sees.</p></li>
+        <li><svg viewBox="0 0 40 20"><path d="M4 16 L36 2 L36 16 Z" class="lg-wedge"/><path d="M4 16 L36 8 L36 11 Z" class="lg-wedge-zoom"/></svg>
+          <p><strong>Camera view.</strong> Faint wedge: the wide camera. Bright narrow wedge: the zoom camera, which the
+            tracker points at whatever it wants a closer look at.</p></li>
+      </ul>
+      <p class="colours"><strong>Colours.</strong> Each real object has its own colour, and its tracks and sensor hits are
+        drawn in it. Grey belongs to nothing real: clutter, or a false track. The colours come from scoring against the
+        truth afterwards; the tracker does not know them.</p>
+
+      <div class="guide-cols">
+        <section>
+          <h2>Good tracking looks like</h2>
+          <p>The dot sits on the cross, the tail follows the faint line, the shaded area stays small, the label is right,
+            and each object keeps one track number the whole time.</p>
+          <h2>Where to start</h2>
+          <p><strong>One site</strong>, from about 90 s. The intruder drone stops to hover, which hides it from the radar:
+            radar ignores anything not moving toward or away from it, to filter out buildings and trees. The track holds
+            anyway, on the cameras and the radio. Notes in the side panel point out moments like this.</p>
+        </section>
+        <section>
+          <h2>Side panel and timeline</h2>
+          <p><strong>Tracks now:</strong> Class is what the tracker thinks the object is, ±95% its uncertainty in metres,
+            Sensors the ones that updated it in the last 5 s. Hover a row or a dot for its error against the truth.</p>
+          <p><strong>The graph above the time slider</strong> shows how wrong the whole picture is at each moment (GOSPA:
+            position error in metres, plus a penalty per missed object or false track). Lower is better; click to jump.</p>
+          <p><strong>Scores:</strong> per real object over the whole run: time tracked, average error, track breaks, and
+            how long until it got the right label.</p>
+        </section>
+      </div>
+
+      <div class="guide-foot">
+        <p class="keys"><kbd>Space</kbd> play / pause · <kbd>←</kbd> <kbd>→</kbd> step 1 s (<kbd>Shift</kbd>: 10 s) ·
+          drag to pan, scroll to zoom · <kbd>?</kbd> this guide</p>
+        <button class="primary">Got it</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="app.js"></script>
 </body>
